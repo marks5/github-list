@@ -15,7 +15,7 @@ class GithubPagingSource(
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, User> {
         val position = params.key ?: GITHUB_STARTING_PAGE_INDEX
         return try {
-            val response = service.getUsers(page = position, per_page = params.loadSize)
+            val response = service.getUsers(since = position, per_page = params.loadSize)
             val nextKey = if (response.isEmpty()) {
                 null
             } else {

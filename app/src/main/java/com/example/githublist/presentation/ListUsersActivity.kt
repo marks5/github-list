@@ -6,6 +6,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.paging.LoadState
@@ -33,14 +34,23 @@ class ListUsersActivity : AppCompatActivity() {
         val viewModel = ViewModelProvider(this, Injection.provideViewModelFactory(owner = this))
             .get(GitHubViewModel::class.java)
 
+        binding.list.adapter = adapter
+
         lifecycleScope.launch {
             viewModel.users.collectLatest {
                 adapter.submitData(it)
             }
         }
 
+        binding.retryButton.setOnClickListener { adapter.retry() }
+
         lifecycleScope.launch {
             adapter.loadStateFlow.collectLatest { loadStates ->
+                val isListEmpty = loadStates.refresh is LoadState.NotLoading && adapter.itemCount == 0
+                binding.progressBar.isVisible = loadStates.source.refresh is LoadState.Loading
+                binding.list.isVisible = !isListEmpty
+                binding.emptyList.isVisible = isListEmpty
+                binding.retryButton.isVisible = loadStates.source.refresh is LoadState.Error
                 binding.list.visibility =
                     if (loadStates.refresh is LoadState.NotLoading && adapter.itemCount > 0) View.VISIBLE else View.GONE
 

@@ -11,8 +11,7 @@ import retrofit2.http.*
 interface GithubAPI {
 
     @GET("users")
-    @Headers("Accept: application/json", "Authorization: Bearer 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")
-    suspend fun getUsers(@Path("since") page: Int, @Path("per_page") per_page: Int): List<User>
+    suspend fun getUsers(@Query("since") since: Int, @Query("per_page") per_page: Int): List<User>
 
     @GET("users/{username}")
     @Headers("Accept: application/json", "Authorization: Bearer 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")

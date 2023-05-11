@@ -11,7 +11,9 @@ class GithubRepository(private val service: GithubAPI) {
     fun getUsers(): Flow<PagingData<User>> {
         return Pager(
                 config = PagingConfig(
+                    initialLoadSize = 30,
                 pageSize = NETWORK_PAGE_SIZE,
+                    prefetchDistance = 10,
                 enablePlaceholders = false
              ),
                 pagingSourceFactory = { GithubPagingSource(service) }
@@ -19,6 +21,6 @@ class GithubRepository(private val service: GithubAPI) {
     }
 
     companion object {
-        const val NETWORK_PAGE_SIZE = 30
+        const val NETWORK_PAGE_SIZE = 50
     }
 }
