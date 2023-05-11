@@ -1,4 +1,4 @@
-package com.example.githublist.presentation
+package com.example.githublist.presentation.list
 
 import android.view.ViewGroup
 import androidx.paging.PagingDataAdapter

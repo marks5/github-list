@@ -1,4 +1,4 @@
-package com.example.githublist.presentation
+package com.example.githublist.presentation.list
 
 import android.content.Intent
 import android.view.LayoutInflater
@@ -11,6 +11,8 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.example.githublist.R
 import com.example.githublist.model.User
+import com.example.githublist.presentation.repo.RepositoriesActivity
+import com.example.githublist.presentation.repo.RepositoriesActivity.Companion.EXTRA_USER
 
 class UserViewHolder(view: View) : RecyclerView.ViewHolder(view) {
     private val login: TextView = view.findViewById(R.id.user_login)
@@ -20,10 +22,10 @@ class UserViewHolder(view: View) : RecyclerView.ViewHolder(view) {
 
     init {
         view.setOnClickListener {
-//            val intent = Intent(view.context, RepositoriesActivity::class).apply {
-//                putExtra("login", user?.login)
-//            }
-//            view.context.startActivity(intent)
+            val intent = Intent(view.context, RepositoriesActivity::class.java).apply {
+                putExtra(EXTRA_USER, user?.login)
+            }
+            view.context.startActivity(intent)
         }
     }
 

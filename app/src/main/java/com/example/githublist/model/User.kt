@@ -1,6 +1,7 @@
 package com.example.githublist.model
 
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
 data class User (
 
@@ -23,4 +24,4 @@ data class User (
   @SerializedName("type"                ) var type              : String?  = null,
   @SerializedName("site_admin"          ) var siteAdmin         : Boolean? = null
 
-)
+) : Serializable

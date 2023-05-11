@@ -14,12 +14,10 @@ interface GithubAPI {
     suspend fun getUsers(@Query("since") since: Int, @Query("per_page") per_page: Int): List<User>
 
     @GET("users/{username}")
-    @Headers("Accept: application/json", "Authorization: Bearer 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")
     suspend fun searchUser(@Path("username") username: String): User
 
     @GET("users/{username}/repos")
-    @Headers("Accept: application/json", "Authorization: Bearer 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")
-    suspend fun getUserRepos(@Path("username") username: String): List<Repository>
+    suspend fun getUserRepos(@Path("username") username: String, @Query("per_page") per_page: Int, @Query("page") page: Int): List<Repository>
 
     companion object {
         private const val BASE_URL = "https://api.github.com/"
