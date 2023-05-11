@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ Copyright (C) 2018 The Android Open Source Project
   ~
@@ -15,12 +16,13 @@
   -->
 
 <resources>
-    <string name="app_name">Paging</string>
-    <string name="loading">Loading</string>
-    <string name="language">Language: %s</string>
-    <string name="search_hint">GitHub Repository</string>
-    <string name="no_results">No results 😓</string>
-    <string name="unknown">\?</string>
-    <string name="retry">Retry</string>
-    <string name="unknow">desconhecido</string>
+    <dimen name="row_item_margin_vertical">12dp</dimen>
+    <dimen name="row_item_margin_horizontal">12dp</dimen>
+    <dimen name="user_name_size">24sp</dimen>
+    <dimen name="repo_description_size">16sp</dimen>
+    <dimen name="repo_icon_size">24dp</dimen>
+    <dimen name="loading_progress_bar_size">36dp</dimen>
+    <dimen name="placeholder_item_height">32dp</dimen>
+    <dimen name="placeholder_img_size">60dp</dimen>
+    <dimen name="error_text_size">24sp</dimen>
 </resources>
