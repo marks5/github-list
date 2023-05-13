@@ -23,4 +23,5 @@
     <string name="unknown">\?</string>
     <string name="retry">Retry</string>
     <string name="unknow">desconhecido</string>
+    <string name="user_fetch_error">Error</string>
 </resources>

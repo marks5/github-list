@@ -1,99 +1,142 @@
 package com.example.githublist.presentation.list
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.paging.LoadState
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.DividerItemDecoration
-import com.example.githublist.Injection
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.example.githublist.databinding.ActivityListUsersBinding
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.example.githublist.presentation.detail.DetailActivity
+import com.example.githublist.presentation.repo.RepositoriesActivity
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
+import kotlin.math.log
 
+@AndroidEntryPoint
 class ListUsersActivity : AppCompatActivity() {
 
-    private val adapter = UsersAdapter()
+    private var _binding: ActivityListUsersBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var linearLayoutManager: LinearLayoutManager
+    private lateinit var userAdapter: UserAdapter
+
+    private val viewModel: UserListViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = ActivityListUsersBinding.inflate(layoutInflater)
+        _binding = ActivityListUsersBinding.inflate(layoutInflater)
         val view = binding.root
         setContentView(view)
 
-        val decoration = DividerItemDecoration(this, DividerItemDecoration.VERTICAL)
-        binding.list.addItemDecoration(decoration)
+        viewModel.userListViewStateLiveData.observe(this) { render(it) }
+        viewModel.userListActionLiveData.observe(this) { perform(it) }
 
-        val viewModel = ViewModelProvider(this, Injection.provideViewModelFactory(owner = this))
-            .get(GitHubViewModel::class.java)
+        bindingProperties()
+        initViews()
+    }
 
-        binding.list.adapter = adapter
+    private fun initViews() = with(binding) {
+        initRecyclerView()
 
-        lifecycleScope.launch {
-            viewModel.users.collectLatest {
-                adapter.submitData(it)
-            }
-        }
-
-        binding.retryButton.setOnClickListener { adapter.retry() }
-
-        lifecycleScope.launch {
-            adapter.loadStateFlow.collectLatest { loadStates ->
-                val isListEmpty = loadStates.refresh is LoadState.NotLoading && adapter.itemCount == 0
-                binding.progressBar.isVisible = loadStates.source.refresh is LoadState.Loading
-                binding.list.isVisible = !isListEmpty
-                binding.emptyList.isVisible = isListEmpty
-                binding.retryButton.isVisible = loadStates.source.refresh is LoadState.Error
-                binding.list.visibility =
-                    if (loadStates.refresh is LoadState.NotLoading && adapter.itemCount > 0) View.VISIBLE else View.GONE
-
-                if (loadStates.refresh is LoadState.Error) {
-                    val message = (loadStates.refresh as LoadState.Error).error.message
-                    if (message != null) {
-//                        showSnackbar(message)
-                    }
-                }
-            }
+        retryButton.setOnClickListener {
+            viewModel.loadUsers()
         }
     }
 
-//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-//        menuInflater.inflate(R.menu.menu_main, menu)
-//        val searchItem = menu?.findItem(R.id.action_search)
-//        val searchView = searchItem?.actionView as SearchView
-//        searchView.queryHint = "Search users"
-//        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-//            override fun onQueryTextSubmit(query: String?): Boolean {
-//                if (!query.isNullOrEmpty()) {
-//                    viewModel.searchUsers(query)
-//                }
-//                searchItem?.collapseActionView()
-//                return true
-//            }
-//
-//            override fun onQueryTextChange(newText: String?): Boolean {
-//                if (!newText.isNullOrEmpty()) {
-//                    viewModel.searchUsers(newText)
-//                }
-//                return true
-//            }
-//        })
-//        return true
-//    }
-//
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            R.id.action_refresh -> {
-//                adapter.refresh()
-//                true
-//            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
-//
-//    private fun showSnackbar(message: String) {
-//        Snackbar.make(coordinatorLayout, message, Snackbar.LENGTH_LONG).show()
-//    }
+    private fun render(viewState: UserListViewState?) {
+        return when (viewState) {
+            UserListViewState.Loading -> showLoading()
+            is UserListViewState.Results -> {
+                hideLoading()
+                hideRetry()
+                displayUsers(viewState.users)
+            }
+            is UserListViewState.Error -> {
+                hideLoading()
+                showRetry()
+                showErrorMessage(viewState.errorMessage)
+            }
+            else -> {}
+        }
+    }
+
+    private fun showRetry() {
+        binding.retryButton.visibility = View.VISIBLE
+    }
+
+    private fun hideRetry() {
+        binding.retryButton.visibility = View.GONE
+    }
+
+    private fun perform(action: UserListAction) {
+        return when (action) {
+            is UserListAction.Navigate -> navigate(action.login)
+        }
+    }
+
+    private fun showLoading() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideLoading() {
+        binding.progressBar.visibility = View.GONE
+    }
+
+    private fun showErrorMessage(errorMessage: String?) {
+        errorMessage?.let { Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show() }
+    }
+
+    private fun displayUsers(userList: List<UserView>) {
+        userAdapter.submitList(userList)
+    }
+
+    private fun navigate(login: String) {
+        val intent = Intent(this, DetailActivity::class.java)
+        intent.putExtra(RepositoriesActivity.EXTRA_USER, login)
+        startActivity(intent)
+    }
+
+    private fun initRecyclerView() {
+        userAdapter = UserAdapter(
+            onItemClickListener = object : OnItemClickListener {
+                override fun onItemClick(user: UserView) {
+                    viewModel.onUserClicked(user)
+                }
+            }
+        )
+
+        linearLayoutManager = LinearLayoutManager(binding.root.context)
+        binding.list.apply {
+            layoutManager = linearLayoutManager
+            addItemDecoration(DividerItemDecoration(binding.root.context,
+                (layoutManager as LinearLayoutManager).orientation))
+            adapter = userAdapter
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        _binding = null
+    }
+
+    private fun bindingProperties() = with(binding) {
+        search.setOnQueryTextListener(object :
+            android.widget.SearchView.OnQueryTextListener,
+            SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                newText?.let { viewModel.filterUsers(it) }
+                return true
+            }
+        })
+    }
+
 }

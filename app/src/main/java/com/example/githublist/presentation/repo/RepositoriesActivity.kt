@@ -1,62 +1,101 @@
 package com.example.githublist.presentation.repo
 
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.isVisible
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.lifecycleScope
-import androidx.paging.LoadState
-import com.example.githublist.Injection
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.githublist.databinding.ActivityRepoUserBinding
-import com.example.githublist.presentation.list.GitHubViewModel
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
+import com.google.android.material.snackbar.Snackbar
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class RepositoriesActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_USER = "extra_user"
     }
 
-    private lateinit var binding: ActivityRepoUserBinding
+    private var _binding: ActivityRepoUserBinding? = null
+    private val binding get() = _binding!!
+
+    private lateinit var linearLayoutManager: LinearLayoutManager
+    private lateinit var repoAdapter: RepoAdapter
+
+    private val viewModel: RepoViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityRepoUserBinding.inflate(layoutInflater)
+        _binding = ActivityRepoUserBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val viewModel = ViewModelProvider(this, Injection.provideViewModelFactory(owner = this))
-            .get(RepoViewModel::class.java)
+        supportActionBar?.show()
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
         intent.getStringExtra(EXTRA_USER)?.let {
             viewModel.setUsername(it)
         }
 
-        val adapter = ReposAdapter()
-        binding.list.adapter = adapter
-
-        viewModel.getRepos().observe(this@RepositoriesActivity) { repositories ->
-            adapter.submitData(lifecycle, repositories)
+        viewModel.repoStateLiveData.observe(this) {
+            render(it)
         }
 
-        lifecycleScope.launch {
-            adapter.loadStateFlow.collectLatest { loadStates ->
-                val isListEmpty = loadStates.refresh is LoadState.NotLoading && adapter.itemCount == 0
-                binding.progressBar.isVisible = loadStates.source.refresh is LoadState.Loading
-                binding.list.isVisible = !isListEmpty
-                binding.emptyList.isVisible = isListEmpty
-                binding.retryButton.isVisible = loadStates.source.refresh is LoadState.Error
-                binding.list.visibility =
-                    if (loadStates.refresh is LoadState.NotLoading && adapter.itemCount > 0) View.VISIBLE else View.GONE
+        initViews()
+    }
 
-                if (loadStates.refresh is LoadState.Error) {
-                    val message = (loadStates.refresh as LoadState.Error).error.message
-                    if (message != null) {
-//                        showSnackbar(message)
-                    }
-                }
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            android.R.id.home -> {
+                finish()
+                true
             }
+            else -> super.onOptionsItemSelected(item)
         }
+    }
 
+    private fun initViews() {
+        repoAdapter = RepoAdapter()
+
+        linearLayoutManager = LinearLayoutManager(binding.root.context)
+        binding.list.apply {
+            layoutManager = linearLayoutManager
+            addItemDecoration(
+                DividerItemDecoration(binding.root.context,
+                (layoutManager as LinearLayoutManager).orientation)
+            )
+            adapter = repoAdapter
+        }
+    }
+
+    private fun render(viewState: RepositoriesViewState?) {
+        return when (viewState) {
+            RepositoriesViewState.Loading -> showLoading()
+            is RepositoriesViewState.Results -> {
+                hideLoading()
+                displayRepositories(viewState.repos)
+            }
+            is RepositoriesViewState.Error -> {
+                hideLoading()
+                showErrorMessage(viewState.errorMessage)
+            }
+            else -> {}
+        }
+    }
+
+    private fun displayRepositories(repos: List<RepoView>) {
+        repoAdapter.submitList(repos)
+    }
+
+    private fun showErrorMessage(errorMessage: String?) {
+        errorMessage?.let { Snackbar.make(binding.root, it, Snackbar.LENGTH_SHORT).show() }
+    }
+
+    private fun showLoading() {
+        binding.progressBar.visibility = View.VISIBLE
+    }
+
+    private fun hideLoading() {
+        binding.progressBar.visibility = View.GONE
     }
 }

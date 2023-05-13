@@ -1,40 +1,21 @@
 package com.example.githublist.data
 
-import com.example.githublist.model.Repository
-import com.example.githublist.model.User
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import com.example.githublist.data.model.RepoEntity
+import com.example.githublist.data.model.UserDetailEntity
+import com.example.githublist.data.model.UserEntity
+import com.example.githublist.domain.model.Repository
+import com.example.githublist.domain.model.UserDomain
 import retrofit2.http.*
 
 interface GithubAPI {
 
     @GET("users")
-    suspend fun getUsers(@Query("since") since: Int, @Query("per_page") per_page: Int): List<User>
+    suspend fun getUsers(@Query("since") since: Int, @Query("per_page") per_page: Int): List<UserEntity>
 
     @GET("users/{username}")
-    suspend fun searchUser(@Path("username") username: String): User
+    suspend fun searchUser(@Path("username") username: String): UserDetailEntity
 
     @GET("users/{username}/repos")
-    suspend fun getUserRepos(@Path("username") username: String, @Query("per_page") per_page: Int, @Query("page") page: Int): List<Repository>
+    suspend fun getUserRepos(@Path("username") username: String): List<RepoEntity>
 
-    companion object {
-        private const val BASE_URL = "https://api.github.com/"
-
-        fun create(): GithubAPI {
-            val logger = HttpLoggingInterceptor()
-            logger.level = HttpLoggingInterceptor.Level.BASIC
-
-            val client = OkHttpClient.Builder()
-                .addInterceptor(logger)
-                .build()
-            return Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-                .create(GithubAPI::class.java)
-        }
-    }
 }
