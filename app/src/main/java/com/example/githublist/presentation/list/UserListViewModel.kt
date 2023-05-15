@@ -56,10 +56,10 @@ class UserListViewModel @Inject constructor(
                     fetchNewUsersUseCase.execute()
                 }
                 val userList = queryLocalUsers()
-                userListViewState.value = UserListViewState.Results(userList)
+                userListViewState.postValue(UserListViewState.Results(userList))
             } catch (error: UserFetchError) {
-                userListViewState.value =
-                    UserListViewState.Error(stringResources.getUserFetchErrorMessage())
+                userListViewState.postValue(
+                    UserListViewState.Error(stringResources.getUserFetchErrorMessage()))
             } finally {
                 isRequestingUsers = false
             }
@@ -82,7 +82,7 @@ class UserListViewModel @Inject constructor(
 
         scope.launch(coroutineDispatcher) {
             val filteredUserList = filterLocalUsers(filter)
-            userListViewState.value = UserListViewState.Results(filteredUserList)
+            userListViewState.postValue(UserListViewState.Results(filteredUserList))
         }
     }
 
