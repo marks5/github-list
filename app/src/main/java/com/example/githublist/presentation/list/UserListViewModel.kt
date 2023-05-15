@@ -14,6 +14,7 @@ import com.example.githublist.presentation.custom.SingleLiveData
 import com.example.githublist.presentation.custom.StringResources
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -27,6 +28,8 @@ class UserListViewModel @Inject constructor(
     private val coroutineDispatcher: CoroutineDispatcher,
     private val stringResources: StringResources
 ) : ViewModel() {
+
+    private val scope = CoroutineScope(coroutineDispatcher)
 
     private val userListViewState: MutableLiveData<UserListViewState> = MutableLiveData()
     val userListViewStateLiveData: LiveData<UserListViewState> = userListViewState
@@ -42,19 +45,11 @@ class UserListViewModel @Inject constructor(
         loadUsers()
     }
 
-    fun onScroll(searchText: String, totalItemCount: Int, lastVisibleItemPosition: Int) {
-        if (!isRequestingUsers
-            && searchText.isEmpty()
-            && totalItemCount == lastVisibleItemPosition + 1) {
-            loadUsers()
-        }
-    }
-
     fun loadUsers() {
         if (filterApplied.isNotEmpty()) return
         userListViewState.value = UserListViewState.Loading
 
-        viewModelScope.launch {
+        scope.launch {
             try {
                 withContext(coroutineDispatcher) {
                     isRequestingUsers = true
@@ -85,7 +80,7 @@ class UserListViewModel @Inject constructor(
     fun filterUsers(filter: String) {
         filterApplied = filter
 
-        viewModelScope.launch {
+        scope.launch(coroutineDispatcher) {
             val filteredUserList = filterLocalUsers(filter)
             userListViewState.value = UserListViewState.Results(filteredUserList)
         }

@@ -3,8 +3,6 @@ package com.example.githublist.data
 import com.example.githublist.data.model.RepoEntity
 import com.example.githublist.data.model.UserDetailEntity
 import com.example.githublist.data.model.UserEntity
-import com.example.githublist.domain.model.Repository
-import com.example.githublist.domain.model.UserDomain
 import retrofit2.http.*
 
 interface GithubAPI {

@@ -23,9 +23,6 @@ class DetailViewModel @Inject constructor(
     private val repoState: MutableLiveData<DetailViewState> = MutableLiveData()
     val userStateLiveData: LiveData<DetailViewState> = repoState
 
-    private val detailAction: SingleLiveData<UserListAction> = SingleLiveData()
-    val detailActionLiveData: LiveData<UserListAction> = detailAction
-
     fun setUsername(login: String) {
         this.repoState.value = DetailViewState.Loading
 

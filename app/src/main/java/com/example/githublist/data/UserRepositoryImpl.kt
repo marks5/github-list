@@ -1,5 +1,6 @@
 package com.example.githublist.data
 
+import android.util.Log
 import com.example.githublist.data.mapper.UserDaoToUserDomainMapper
 import com.example.githublist.data.mapper.UserEntityToDaoMapper
 import com.example.githublist.data.model.UserDetailEntity
