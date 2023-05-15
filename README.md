@@ -2,7 +2,7 @@
 
 Basta baixar e instalar para rodar o app.
 
-https://drive.google.com/file/d/1BBSgQAbMqNcVwiglVJxF0msqYzLYC6sZ/view?usp=sharing
+https://drive.google.com/file/d/1jmL-sPRYq251Jg8RfTyYgornGz1oyKVX/view?usp=sharing
 
 # Bibliotecas usadas
 
